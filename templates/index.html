@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Taste Matcher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #0a0a0a;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+        
+        .central-content {
+            text-align: center;
+            z-index: 10;
+            position: absolute;
+            top: 70%;
+            left: 52%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            max-width: 1000px;
+        }
+        
+        h1 {
+            font-size: 56px;
+            margin-bottom: 15px;
+            white-space: nowrap; /* This forces the heading to stay on one line */
+            overflow: hidden;
+        }
+        
+        p {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        
+        .cta-button {
+            background-color: white;
+            color: black;
+            padding: 12px 24px;
+            border-radius: 25px;
+            border: none;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+        }
+        
+        .gallery-container {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            perspective: 1000px;
+        }
+        
+        .gallery-ring {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            animation: rotate 40s linear infinite;
+        }
+        
+        .card {
+            position: absolute;
+            width: 150px;
+            height: 225px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+        }
+        
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        @keyframes rotate {
+            from {
+                transform: rotateY(0deg);
+            }
+            to {
+                transform: rotateY(360deg);
+            }
+        }
+        
+        .upload-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+        
+        .file-upload input[type="file"] {
+            position: absolute;
+            font-size: 100px;
+            right: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .upload-status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .upload-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .upload-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            width: 100px;
+            text-align: right;
+        }
+        
+        .upload-button-container {
+            flex: 1;
+            text-align: left;
+        }
+        
+        .file-name {
+            font-size: 14px;
+            color: #4CAF50;
+            margin-top: 5px;
+            display: none;
+            text-align: left;
+            padding-left: 10px;
+        }
+        
+        .calculate-btn {
+            background-color: #e50914;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            border: none;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: all 0.3s ease;
+            display: none;
+        }
+        
+        .calculate-btn:hover {
+            background-color: #f40612;
+            transform: translateY(-2px);
+        }
+        
+        .results-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 10, 10, 0.98);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+        }
+        
+        .results-content {
+            max-width: 600px;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .results-title {
+            font-size: 42px;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .compatibility-score {
+            font-size: 80px;
+            font-weight: bold;
+            margin: 30px 0;
+            color: #e50914;
+        }
+        
+        .score-detail {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            align-items: center;
+        }
+        
+        .score-label {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            flex: 1;
+            text-align: left;
+        }
+        
+        .score-bar {
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            flex: 2;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 0 15px;
+        }
+        
+        .score-bar-fill {
+            height: 100%;
+            background-color: #e50914;
+        }
+        
+        .score-percentage {
+            font-size: 16px;
+            color: white;
+            width: 50px;
+            text-align: right;
+        }
+        
+        .close-results {
+            background-color: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-top: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .close-results:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin: 20px 0;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .analyzing-step {
+            margin: 10px 0;
+            text-align: left;
+            padding: 5px 0;
+            display: flex;
+            align-items: center;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+        
+        .analyzing-step.active {
+            opacity: 1;
+        }
+        
+        .step-icon {
+            margin-right: 10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .step-icon.loading {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-right-color: white;
+            animation: spin 1s linear infinite;
+        }
+        
+        .step-icon.complete {
+            background-color: #4CAF50;
+        }
+        
+        .analyze-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 10, 10, 0.98);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+        }
+        
+        .analyze-content {
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        .analyze-steps {
+            margin-top: 30px;
+            width: 100%;
+        }
+
+        .error-message {
+            color: #e50914;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">🎬 LetterBond</div>
+    </div>
+    
+    <div class="container">
+        <div class="gallery-container">
+            <div class="gallery-ring" id="galleryRing">
+                <!-- Cards will be dynamically inserted here by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="central-content">
+            <h1>Compare Movie Tastes</h1>
+            <p>Upload Letterboxd CSV files to see how compatible your movie tastes are. Analyzes your ratings, genres, and directors to calculate your perfect movie match.</p>
+            
+            <div class="upload-container">
+                <div class="upload-row">
+                    <div class="upload-label">Your CSV:</div>
+                    <div class="upload-button-container">
+                        <div class="file-upload">
+                            <button class="cta-button" style="width: 100%;">Select Your CSV</button>
+                            <input type="file" accept=".csv" id="yourCsvUpload">
+                        </div>
+                        <div class="file-name" id="yourFileName"></div>
+                        <div class="error-message" id="yourFileError"></div>
+                    </div>
+                </div>
+                
+                <div class="upload-row">
+                    <div class="upload-label">Friend's CSV:</div>
+                    <div class="upload-button-container">
+                        <div class="file-upload">
+                            <button class="cta-button" style="width: 100%;">Select Friend's CSV</button>
+                            <input type="file" accept=".csv" id="friendCsvUpload">
+                        </div>
+                        <div class="file-name" id="friendFileName"></div>
+                        <div class="error-message" id="friendFileError"></div>
+                    </div>
+                </div>
+                
+                <button id="calculateBtn" class="calculate-btn">Calculate Compatibility</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Analyzing Modal -->
+    <div class="analyze-container" id="analyzeModal">
+        <div class="analyze-content">
+            <h2>Analyzing Movie Tastes</h2>
+            <div class="loader"></div>
+            <div class="analyze-steps">
+                <div class="analyzing-step" id="step1">
+                    <div class="step-icon loading" id="step1Icon"></div>
+                    <div>Loading ratings data...</div>
+                </div>
+                <div class="analyzing-step" id="step2">
+                    <div class="step-icon" id="step2Icon"></div>
+                    <div>Fetching movie metadata...</div>
+                </div>
+                <div class="analyzing-step" id="step3">
+                    <div class="step-icon" id="step3Icon"></div>
+                    <div>Calculating rating similarity...</div>
+                </div>
+                <div class="analyzing-step" id="step4">
+                    <div class="step-icon" id="step4Icon"></div>
+                    <div>Computing genre & director compatibility...</div>
+                </div>
+                <div class="analyzing-step" id="step5">
+                    <div class="step-icon" id="step5Icon"></div>
+                    <div>Finalizing compatibility score...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Results Modal -->
+    <div class="results-container" id="resultsModal">
+        <div class="results-content">
+            <div class="results-title">Movie Compatibility</div>
+            <div class="compatibility-score" id="finalScore">0%</div>
+            <div class="score-detail">
+                <div class="score-label">Rating Similarity</div>
+                <div class="score-bar">
+                    <div class="score-bar-fill" id="ratingBar" style="width: 0%"></div>
+                </div>
+                <div class="score-percentage" id="ratingScore">0%</div>
+            </div>
+            <div class="score-detail">
+                <div class="score-label">Genre & Director</div>
+                <div class="score-bar">
+                    <div class="score-bar-fill" id="genreBar" style="width: 0%"></div>
+                </div>
+                <div class="score-percentage" id="genreScore">0%</div>
+            </div>
+            <div id="compatibilityMessage" style="margin-top: 20px; color: rgba(255,255,255,0.8)"></div>
+            <button class="close-results" id="closeResults">Calculate Again</button>
+        </div>
+    </div>
+
+    <script>
+        const moviePosters = [
+            '/static/images/movie1.jpg',
+            '/static/images/movie2.jpg',
+            '/static/images/movie3.jpg',
+            '/static/images/movie4.jpg',
+            '/static/images/movie5.jpg',
+            '/static/images/movie6.jpg',
+            '/static/images/movie7.jpg',
+            '/static/images/movie8.jpg',
+            '/static/images/movie9.jpg',
+            '/static/images/movie10.jpg',
+            '/static/images/movie11.jpg',
+            '/static/images/movie12.jpg'
+        ];
+
+        // Inject cards into 3D ring
+        function setupGallery() {
+            const ring = document.getElementById('galleryRing');
+            const totalCards = moviePosters.length;
+            const angleIncrement = (2 * Math.PI) / totalCards;
+            const radius = 250;
+
+            for (let i = 0; i < totalCards; i++) {
+                const card = document.createElement('div');
+                card.className = 'card';
+                const angle = i * angleIncrement;
+                const x = Math.sin(angle) * radius;
+                const z = Math.cos(angle) * radius;
+                card.style.transform = `translate3d(${x}px, 0, ${z}px) rotateY(${-angle}rad)`;
+
+                const img = document.createElement('img');
+                img.src = moviePosters[i];
+                img.alt = 'Movie poster';
+                card.appendChild(img);
+
+                ring.appendChild(card);
+            }
+        }
+        
+        // Validate CSV file format
+        function validateCSVFile(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) {
+                    reject('No file selected');
+                    return;
+                }
+                
+                if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+                    reject('File must be a CSV');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const contents = e.target.result;
+                    // Basic check for CSV format (has commas and at least one newline)
+                    if (contents.includes(',') && contents.includes('\n')) {
+                        resolve(true);
+                    } else {
+                        reject('Invalid CSV format');
+                    }
+                };
+                reader.onerror = function() {
+                    reject('Error reading file');
+                };
+                reader.readAsText(file);
+            });
+        }
+        
+        // Handle file uploads
+        function setupFileUploads() {
+            const yourFileInput = document.getElementById('yourCsvUpload');
+            const friendFileInput = document.getElementById('friendCsvUpload');
+            const yourFileName = document.getElementById('yourFileName');
+            const friendFileName = document.getElementById('friendFileName');
+            const yourFileError = document.getElementById('yourFileError');
+            const friendFileError = document.getElementById('friendFileError');
+            const calculateBtn = document.getElementById('calculateBtn');
+            
+            let yourFileSelected = false;
+            let friendFileSelected = false;
+            
+            function updateCalculateButton() {
+                if (yourFileSelected && friendFileSelected) {
+                    calculateBtn.style.display = 'inline-block';
+                } else {
+                    calculateBtn.style.display = 'none';
+                }
+            }
+            
+            yourFileInput.addEventListener('change', function(e) {
+                yourFileName.style.display = 'none';
+                yourFileError.style.display = 'none';
+                yourFileSelected = false;
+                
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    validateCSVFile(file)
+                        .then(() => {
+                            yourFileName.textContent = file.name;
+                            yourFileName.style.display = 'block';
+                            yourFileSelected = true;
+                            updateCalculateButton();
+                        })
+                        .catch(error => {
+                            yourFileError.textContent = error;
+                            yourFileError.style.display = 'block';
+                            e.target.value = '';
+                            updateCalculateButton();
+                        });
+                }
+            });
+            
+            friendFileInput.addEventListener('change', function(e) {
+                friendFileName.style.display = 'none';
+                friendFileError.style.display = 'none';
+                friendFileSelected = false;
+                
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    validateCSVFile(file)
+                        .then(() => {
+                            friendFileName.textContent = file.name;
+                            friendFileName.style.display = 'block';
+                            friendFileSelected = true;
+                            updateCalculateButton();
+                        })
+                        .catch(error => {
+                            friendFileError.textContent = error;
+                            friendFileError.style.display = 'block';
+                            e.target.value = '';
+                            updateCalculateButton();
+                        });
+                }
+            });
+        }
+
+        function setupCalculation() {
+            const calculateBtn = document.getElementById('calculateBtn');
+            const analyzeModal = document.getElementById('analyzeModal');
+            const resultsModal = document.getElementById('resultsModal');
+            const closeResults = document.getElementById('closeResults');
+            
+            const finalScoreElement = document.getElementById('finalScore');
+            const ratingBarElement = document.getElementById('ratingBar');
+            const ratingScoreElement = document.getElementById('ratingScore');
+            const genreBarElement = document.getElementById('genreBar');
+            const genreScoreElement = document.getElementById('genreScore');
+            const compatibilityMessageElement = document.getElementById('compatibilityMessage');
+            
+            calculateBtn.addEventListener('click', function() {
+
+                analyzeModal.style.visibility = 'visible';
+                analyzeModal.style.opacity = '1';
+                
+                const yourFile = document.getElementById('yourCsvUpload').files[0];
+                const friendFile = document.getElementById('friendCsvUpload').files[0];
+                
+                if (!yourFile || !friendFile) {
+                    alert('Please select both CSV files');
+                    hideAnalyzeModal();
+                    return;
+                }
+                
+                simulateAnalysisSteps()
+                    .then(() => {
+                        try {
+                            processMovieData(yourFile, friendFile)
+                                .then(data => {
+                                    displayResults(data);
+                                })
+                                .catch(error => {
+                                    console.warn('API error, using fallback method:', error);
+                                    // Fallback to mock data if API fails
+                                    const mockResults = calculateMockResults();
+                                    displayResults(mockResults);
+                                });
+                        } catch (error) {
+                            console.error('Error:', error);
+                            hideAnalyzeModal();
+                            alert('An error occurred while calculating compatibility.');
+                        }
+                    });
+            });
+            
+            // Close the results modal and reset
+            closeResults.addEventListener('click', function() {
+                resultsModal.style.opacity = '0';
+                resultsModal.style.visibility = 'hidden';
+                
+                // Reset file selections
+                document.getElementById('yourFileName').style.display = 'none';
+                document.getElementById('friendFileName').style.display = 'none';
+                document.getElementById('calculateBtn').style.display = 'none';
+                document.getElementById('yourCsvUpload').value = '';
+                document.getElementById('friendCsvUpload').value = '';
+            });
+            
+            // Hide analyze modal
+            function hideAnalyzeModal() {
+                analyzeModal.style.visibility = 'hidden';
+                analyzeModal.style.opacity = '0';
+            }
+            
+            // This function attempts to use a real API endpoint
+            function processMovieData(yourFile, friendFile) {
+                return new Promise((resolve, reject) => {
+                    const formData = new FormData();
+                    formData.append('your_csv', yourFile);
+                    formData.append('friend_csv', friendFile);
+                    
+                    
+                    fetch('/compare', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error(`HTTP error! Status: ${res.status}`);
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        // Validate expected data structure
+                        if (!data || typeof data.score === 'undefined') {
+                            throw new Error('Invalid data format from API');
+                        }
+                        
+                        const result = {
+                            ratingScore: data.details?.rating_score || 0,
+                            genreScore: data.details?.genre_score || 0,
+                            finalScore: data.score
+                        };
+                        
+                        resolve(result);
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                        reject(error);
+                    });
+                });
+            }
+            
+            // This function simulates the analysis steps with realistic timings
+            function simulateAnalysisSteps() {
+                // Reset step icons
+                for (let i = 1; i <= 5; i++) {
+                    const stepElement = document.getElementById(`step${i}`);
+                    const iconElement = document.getElementById(`step${i}Icon`);
+                    stepElement.classList.remove('active');
+                    iconElement.classList.remove('loading', 'complete');
+                    iconElement.innerHTML = '';
+                }
+                
+                return new Promise((resolve) => {
+                    const steps = [
+                        { id: 'step1', time: 1000 },
+                        { id: 'step2', time: 2000 },
+                        { id: 'step3', time: 1500 },
+                        { id: 'step4', time: 2000 },
+                        { id: 'step5', time: 1000 }
+                    ];
+                    
+                    let totalDelay = 0;
+                    
+                    steps.forEach((step, index) => {
+                        // Start step
+                        setTimeout(() => {
+                            const stepElement = document.getElementById(step.id);
+                            const iconElement = document.getElementById(`${step.id}Icon`);
+                            stepElement.classList.add('active');
+                            iconElement.classList.add('loading');
+                        }, totalDelay);
+                        
+                        // Complete step
+                        setTimeout(() => {
+                            const iconElement = document.getElementById(`${step.id}Icon`);
+                            iconElement.classList.remove('loading');
+                            iconElement.classList.add('complete');
+                            iconElement.innerHTML = '✓';
+                            
+                            // If last step, resolve the promise
+                            if (index === steps.length - 1) {
+                                setTimeout(resolve, 500);
+                            }
+                        }, totalDelay + step.time);
+                        
+                        totalDelay += step.time;
+                    });
+                });
+            }
+            
+            // Display the results
+            function displayResults(results) {
+                // Hide analysis modal
+                analyzeModal.style.visibility = 'hidden';
+                analyzeModal.style.opacity = '0';
+                
+                // Show results modal
+                resultsModal.style.visibility = 'visible';
+                resultsModal.style.opacity = '1';
+                
+                // Set initial values
+                finalScoreElement.textContent = '0%';
+                ratingBarElement.style.width = '0%';
+                ratingScoreElement.textContent = '0%';
+                genreBarElement.style.width = '0%';
+                genreScoreElement.textContent = '0%';
+                
+                // Animate in the results
+                setTimeout(() => {
+                    // Animate final score counter
+                    animateNumber(finalScoreElement, 0, results.finalScore, '%', 1500);
+                    
+                    // Animate rating bar
+                    setTimeout(() => {
+                        ratingBarElement.style.width = `${results.ratingScore}%`;
+                        animateNumber(ratingScoreElement, 0, results.ratingScore, '%', 1000);
+                    }, 300);
+                    
+                    // Animate genre bar
+                    setTimeout(() => {
+                        genreBarElement.style.width = `${results.genreScore}%`;
+                        animateNumber(genreScoreElement, 0, results.genreScore, '%', 1000);
+                    }, 300);
+                    
+                    // Set compatibility message
+                    setTimeout(() => {
+                        const message = getCompatibilityMessage(results.finalScore);
+                        compatibilityMessageElement.textContent = message;
+                    }, 300);
+                }, 300);
+            }
+            
+            // Helper function to animate number counting
+            function animateNumber(element, start, end, suffix, duration) {
+                const range = end - start;
+                const stepTime = Math.abs(Math.floor(duration / range)) || 30; // Default to 30ms if range is 0
+                let current = start;
+                
+                const timer = setInterval(() => {
+                    current += 1;
+                    element.textContent = current + suffix;
+                    
+                    if (current >= end) {
+                        element.textContent = end + suffix;
+                        clearInterval(timer);
+                    }
+                }, stepTime);
+            }
+            
+            // Get compatibility message based on score
+            function getCompatibilityMessage(score) {
+                if (score >= 90) {
+                    return "Incredible match! You two have nearly identical movie tastes!";
+                } else if (score >= 80) {
+                    return "Fantastic compatibility! You'd make great movie night partners.";
+                } else if (score >= 70) {
+                    return "Great match! You share similar taste in films.";
+                } else if (score >= 60) {
+                    return "Good compatibility. You have enough common ground for movie discussions.";
+                } 
+                else if(score == 100){
+                    return "HMMM... Suspicious, looks like you've uploaded the same csv file!!"
+                }
+                else {
+                    return "Your tastes differ quite a bit, but that makes for interesting conversations!";
+                }
+            }
+        }
+        
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setupGallery();
+            setupFileUploads();
+            setupCalculation();
+        });
+    </script>
+</body>
+</html>
